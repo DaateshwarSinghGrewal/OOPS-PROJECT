@@ -1,0 +1,208 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baithak - Smart Library Seat Booking</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+
+<body>
+
+    <nav>
+        <h2><a href="{% url 'index' %}">Baithak</a></h2>
+
+        <ul>
+            <li><a href="{% url 'index' %}">Dashboard</a></li>
+            <li><a href="{% url 'seat' %}">Book Seat</a></li>
+            <li><a href="{% url 'notification' %}">Notifications</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="{% url 'home' %}">Logout</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Find. Book. Study.</h1>
+
+            <p>
+                Baithak is a smart library seat booking and occupancy
+                management platform that helps students reserve seats,
+                view real-
+                 availability, and eliminate ghost bookings
+                using QR-based verification.
+            </p>
+        </div>
+    </section>
+
+    <section id="how-it-works" class="how-it-works">
+
+    <h2>How Baithak Works</h2>
+
+    <div class="steps">
+
+        <div class="step">
+            <span>1</span>
+            <h3>Book a Seat</h3>
+            <p>Select an available seat from any floor.</p>
+        </div>
+
+        <div class="step">
+            <span>2</span>
+            <h3>Check In</h3>
+            <p>Scan the seat QR code when you arrive.</p>
+        </div>
+
+        <div class="step">
+            <span>3</span>
+            <h3>Study</h3>
+            <p>Your seat remains occupied while you work.</p>
+        </div>
+
+        <div class="step">
+            <span>4</span>
+            <h3>Take Breaks</h3>
+            <p>Leave temporarily without losing your seat.</p>
+        </div>
+
+        <div class="step">
+            <span>5</span>
+            <h3>Receive Alerts</h3>
+            <p>Get notified about reservations and warnings.</p>
+        </div>
+
+        <div class="step">
+            <span>6</span>
+            <h3>Vacate Seat</h3>
+            <p>Release your seat when you're finished.</p>
+        </div>
+
+    </div>
+
+</section>
+
+    <div class="top-section">
+    <section class="dashboard-header">
+    <h1>Welcome, {{ name }}</h1><br>
+    <p>Manage your reservations, track seat availability, and monitor your study sessions.</p><br>
+
+    <div class="timers-container">
+
+    <div class="card1">
+        <h2>Reservation Timer</h2>
+        <h3 id="countdown">01:00 min</h3>
+    </div><br>
+
+    <h3>{Library Main Entrance where you have to scan your id}</h3><br>
+    <a href="{% url 'checkin' %}" class="btn btn-primary"><button type="button" style="border-radius: 6px; width: 150px; height: 50px; background-color: cadetblue; color: antiquewhite; font-size: 18px; padding-left: 10px;">Library Entrance</button></a>
+    <a href="{% url 'break' %}" class="btn btn-primary"><button type="button" style="border-radius: 6px; width: 150px; height: 50px; background-color: yellowgreen; color: antiquewhite; font-size: 18px;">Leaving Library</button></a>
+
+</div>
+</section>
+
+<section class="reservation-box">
+    <div class="card">
+    <h2>My Reservation</h2><br><br>
+    <h3>Seat No. <span id="seat-number">-</span></h3><br><br>
+    <p><strong>Floor:</strong> <span id="seat-floor">-</span></p><br>
+    <p><strong>Status:</strong> <span id="seat-status">None</span></p><br>
+    <p><strong>Check-In Time: </strong><span id="checkin-time">--</span></p>
+</div>
+</section>
+</div>
+
+<section>
+
+<div class="section-title">
+    <h2>Quick Actions</h2>
+</div>
+
+<div class="features">
+
+    <a href="{% url 'seat' %}" class="card-link">
+    <div class="card">
+        <h3>📖 Book Seat</h3><br>
+        <p>Reserve a seat from the available library spaces.</p>
+    </div>
+    </a>
+
+    <div class="card">
+        <h3>📱 Manual Check In</h3>
+        <p>Check in to confirm your presence in the library.</p>
+    </div>
+
+    <div class="card">
+        <h3>☕ Temporary Break</h3><br>
+        <p>Hold your seat while stepping away for a short break.</p>
+    </div>
+
+    <div class="card">
+        <h3>✅ Permanent Check-Out</h3>
+        <p>Release your seat when you finish studying.</p>
+    </div>
+
+</div>
+</section>
+
+<section class="stats-container">
+<div class="card">
+    <h3>Available Seats</h3>
+    <p id="available-seats">450</p>
+</div>
+
+<div class="card">
+    <h3>Occupied Seats</h3>
+    <p id="occupied-seats">0</p>
+</div>
+
+<div class="card">
+    <h3>Reserved Seats</h3>
+    <p id="reserved-seats">0</p>
+</div>
+</section>
+
+<section style="background:white;">
+
+<div class="section-title">
+    <h2>Seats in Each Floor</h2>
+</div>
+
+<div class="steps">
+
+    <div class="step">
+        <h3>Ground Floor</h3>
+        <p id="ground-floor">184 Seats</p>
+    </div>
+
+    <div class="step">
+        <h3>First Floor</h3>
+        <p id="first-floor">86 Seats</p>
+    </div>
+
+    <div class="step">
+        <h3>Second Floor</h3>
+        <p id="second-floor">60 Seats</p>
+    </div>
+
+    <div class="step">
+        <h3>Third Floor</h3>
+        <p id="third-floor">54 Seats</p>
+    </div>
+
+    <div class="step">
+        <h3>Fourth Floor</h3>
+        <p id="id=fourth-floor">66 Seats</p>
+    </div>
+
+</div>
+</section>
+
+    <footer>
+        <p>© 2026 Baithak | Smart Library Seat Booking System</p>
+    </footer>
+
+<script src="{% static 'script.js' %}"></script>
+</body>
+</html>

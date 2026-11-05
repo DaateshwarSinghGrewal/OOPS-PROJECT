@@ -1,0 +1,49 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Baithak</title>
+    <link rel="stylesheet" href="{% static 'home.css' %}">
+</head>
+<body>
+    
+
+    <header>
+        <section class="logo">
+
+        <!-- <img src="{% static 'Thapar_Institute_of_Engineering_and_Technology_logo-removebg-preview.jpg' %}" alt="Thapar Logo"> -->
+
+        </section>
+
+        <h1 class="brand">Baithak</h1>
+
+        <a href="{% url 'login' %}" class="signin-btn">
+            Sign In
+        </a>
+    </header>
+
+    <section class="hero">
+
+        <div class="overlay">
+
+            <h2>Nava Nalanda Central Library</h2>
+
+            <p>
+                Reserve your study desk before you arrive.
+                Verify your presence with a Id scan.
+                Should you wander too long, your seat returns
+                to the commons.
+            </p>
+
+        </div>
+
+    </section>
+
+    <footer class="foot">
+        <p>© 2026 Baithak | Smart Library Seat Booking System</p>
+    </footer>
+
+</body>
+</html>
