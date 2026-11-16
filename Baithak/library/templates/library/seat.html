@@ -1,124 +1,48 @@
 {% load static %}
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baithak - Smart Library Seat Booking</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Choose a seat · Baithak</title>
     <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'app.css' %}">
 </head>
-
 <body>
-
     <nav>
         <h2><a href="{% url 'index' %}">Baithak</a></h2>
-
-        <ul>
-            <li><a href="{% url 'index' %}">Dashboard</a></li>
-            <li><a href="{% url 'seat' %}">Book Seat</a></li>
-            <li><a href="{% url 'notification' %}">Notifications</a></li>
-            <li><a href="{% url 'home' %}">Logout</a></li>
-        </ul>
+        <ul><li><a href="{% url 'index' %}">Dashboard</a></li><li><a href="{% url 'notification' %}">Notifications</a></li><li><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Log out</button></form></li></ul>
     </nav>
+    <main class="seat-page">
+        <div class="page-heading"><span class="eyebrow">PICK YOUR STUDY SPOT</span><h1>Find a seat that feels right.</h1><p>Choose any open seat across the five library floors. Your check-in window and study duration are managed separately.</p></div>
+        {% if messages %}{% for message in messages %}<p class="flash-message">{{ message }}</p>{% endfor %}{% endif %}
+        {% if error %}<p class="flash-message flash-error" role="alert">{{ error }}</p>{% endif %}
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Find. Book. Study.</h1>
+        {% if has_reservation %}
+            <div class="card empty-state"><span class="empty-icon" aria-hidden="true">✦</span><h2>You already have a seat</h2><p>Manage your current reservation from the dashboard before booking another.</p><a class="button-primary" href="{% url 'index' %}">Go to dashboard →</a></div>
+        {% else %}
+            <div class="seat-legend"><span><i class="legend-free"></i>Available</span><span><i class="legend-reserved"></i>Reserved</span><span><i class="legend-occupied"></i>Occupied</span></div>
+            <form method="post" id="booking-form">
+                {% csrf_token %}
+                <div class="booking-controls card"><div><span class="eyebrow">SET YOUR SESSION</span><h2>How long would you like to study?</h2><p>Suggested time: {{ policy.default_minutes }} minutes</p></div><div><label for="duration">Study duration</label><select name="duration" id="duration">{% for minute in duration_options %}<option value="{{ minute }}" {% if minute == policy.default_minutes %}selected{% endif %}>{{ minute }} minutes</option>{% endfor %}</select></div></div>
 
-            <p>
-                Baithak is a smart library seat booking and occupancy
-                management platform that helps students reserve seats,
-                view real-time availability, and eliminate ghost bookings
-                using QR-based verification.
-            </p>
-        </div>
-    </section><br><br>
-
-    <div class="legend">
-
-    <div class="legend-item">
-        <div class="seat-box1 available"></div>
-        <span>Available</span>
-    </div>
-
-    <div class="legend-item">
-        <div class="seat-box1 occupied"></div>
-        <span>Occupied</span>
-    </div>
-
-    <div class="legend-item">
-        <div class="seat-box1 reserved"></div>
-        <span>Reserved</span>
-    </div>
-
-</div>
-
-    <section>
-        <h1>Ground Floor Seats</h1><br>
-
-    <div class="seats-container">
-    {% for seat in seats0 %}
-        <div class="seat-box" data-floor="ground" onclick="selectSeat(this)">
-            {{ seat }}
-        </div>
-    {% endfor %}
-</div><br>
-
-<h1>First Floor Seats</h1><br>
-
-    <div class="seats-container">
-    {% for seat in seats1 %}
-        <div class="seat-box" data-floor="first" onclick="selectSeat(this)">
-            {{ seat }}
-        </div>
-    {% endfor %}
-</div><br>
-
-<h1>Second Floor Seats</h1><br>
-
-    <div class="seats-container">
-    {% for seat in seats2 %}
-        <div class="seat-box" data-floor="second" onclick="selectSeat(this)">
-            {{ seat }}
-        </div>
-    {% endfor %}
-</div><br>
-
-<h1>Third Floor Seats</h1><br>
-
-    <div class="seats-container">
-    {% for seat in seats3 %}
-        <div class="seat-box" data-floor="third" onclick="selectSeat(this)">
-            {{ seat }}
-        </div>
-    {% endfor %}
-</div><br>
-
-<h1>Fourth Floor Seats</h1><br>
-
-    <div class="seats-container">
-    {% for seat in seats4 %}
-        <div class="seat-box" data-floor="fourth" onclick="selectSeat(this)">
-            {{ seat }}
-        </div>
-    {% endfor %}
-</div>
-    </section>
-
-    <div class="button-container">
-    <button class="seat-select1" onclick="confirmSeat()">
-        Select Seat
-    </button>
-    <button class="seat-select2" onclick="cancelSeat()">
-        Cancel Seat
-    </button>
-</div>
-
-    <footer>
-        <p>© 2026 Baithak | Smart <a href="{% url 'checkin' %}" style="color: white;">Library</a> Seat Booking System</p>
-    </footer>
-
-<script src="{% static 'script1.js' %}"></script>
+                {% for floor in floors %}
+                    <section class="floor-section">
+                        <div class="floor-heading"><div><span class="eyebrow">{{ floor.capacity }} TOTAL SEATS</span><h2>{{ floor.label }}</h2></div><span class="availability-chip">{{ floor.available }} available</span></div>
+                        <div class="seats-container" role="radiogroup" aria-label="{{ floor.label }} seats">
+                            {% for seat, reservation in floor.seats %}
+                                <label class="seat-choice {% if reservation %}seat-unavailable{% endif %}" title="Seat {{ seat.number }} — {% if reservation %}{% if reservation.status == 'reserved' %}reserved{% else %}occupied{% endif %}{% else %}available{% endif %}">
+                                    <input type="radio" name="seat_id" value="{{ seat.id }}" aria-label="Seat {{ seat.number }} on {{ floor.label }}" {% if reservation %}disabled{% endif %} required>
+                                    <span class="seat-box {% if reservation %}{% if reservation.status == 'reserved' %}reserved{% else %}occupied{% endif %}{% else %}available{% endif %}">{{ seat.number }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endfor %}
+                <div class="seat-submit"><p>Seat availability is confirmed when you submit. If someone books it first, choose another open spot.</p><button type="submit" class="button-primary">Reserve this seat <span aria-hidden="true">→</span></button></div>
+            </form>
+        {% endif %}
+    </main>
+    <footer><p>© 2026 Baithak <span>·</span> Nava Nalanda Central Library</p></footer>
 </body>
 </html>
