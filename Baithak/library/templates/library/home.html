@@ -1,49 +1,27 @@
 {% load static %}
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Baithak</title>
-    <link rel="stylesheet" href="{% static 'home.css' %}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Baithak · Find your place to focus</title>
+    <link rel="stylesheet" href="{% static 'home.css' %}?v=20261115-2">
+    <link rel="stylesheet" href="{% static 'app.css' %}?v=20261115-2">
 </head>
-<body>
-    
-
+<body class="welcome-page">
     <header>
-        <section class="logo">
-
-        <!-- <img src="{% static 'Thapar_Institute_of_Engineering_and_Technology_logo-removebg-preview.jpg' %}" alt="Thapar Logo"> -->
-
-        </section>
-
-        <h1 class="brand">Baithak</h1>
-
-        <a href="{% url 'login' %}" class="signin-btn">
-            Sign In
-        </a>
+        <section class="logo" aria-hidden="true"></section>
+        <a class="brand" href="{% url 'home' %}">Baithak</a>
+        <a href="{% url 'login' %}" class="signin-btn">Sign in</a>
+        <a href="{% url 'register' %}" class="signin-btn">Create account</a>
     </header>
-
     <section class="hero">
-
         <div class="overlay">
-
-            <h2>Nava Nalanda Central Library</h2>
-
-            <p>
-                Reserve your study desk before you arrive.
-                Verify your presence with a Id scan.
-                Should you wander too long, your seat returns
-                to the commons.
-            </p>
-
+            <h2>A quieter place<br>to do your best work.</h2>
+            <p>Find an open seat at Nava Nalanda Central Library, reserve your study time, and check in when you arrive.</p>
+            <div class="hero-actions"><a class="button-primary" href="{% url 'register' %}">Find your seat <span aria-hidden="true">→</span></a><span>450 seats · 5 floors</span></div>
         </div>
-
     </section>
-
-    <footer class="foot">
-        <p>© 2026 Baithak | Smart Library Seat Booking System</p>
-    </footer>
-
+    <footer class="foot"><p>© 2026 Baithak <span>·</span> Made for Thapar University</p></footer>
 </body>
 </html>

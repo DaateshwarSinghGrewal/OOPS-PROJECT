@@ -1,208 +1,119 @@
 {% load static %}
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Baithak - Smart Library Seat Booking</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard · Baithak</title>
     <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="{% static 'app.css' %}?v=20261115-2">
 </head>
-
 <body>
-
     <nav>
         <h2><a href="{% url 'index' %}">Baithak</a></h2>
-
         <ul>
             <li><a href="{% url 'index' %}">Dashboard</a></li>
-            <li><a href="{% url 'seat' %}">Book Seat</a></li>
+            <li><a href="{% url 'seat' %}">Find a seat</a></li>
             <li><a href="{% url 'notification' %}">Notifications</a></li>
-            <li><a href="#how-it-works">How It Works</a></li>
-            <li><a href="{% url 'home' %}">Logout</a></li>
+            <li><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button>Log out</button></form></li>
         </ul>
     </nav>
 
-    <section class="hero">
+    <header class="hero">
         <div class="hero-content">
-            <h1>Find. Book. Study.</h1>
-
-            <p>
-                Baithak is a smart library seat booking and occupancy
-                management platform that helps students reserve seats,
-                view real-
-                 availability, and eliminate ghost bookings
-                using QR-based verification.
-            </p>
+            <span class="eyebrow">YOUR LIBRARY, AT A GLANCE</span>
+            <h1>Good to see you, {{ student.name }}.</h1>
+            <p>Your seat and study time, all in one place.</p>
         </div>
-    </section>
+    </header>
 
-    <section id="how-it-works" class="how-it-works">
+    <main>
+        {% if messages %}
+            {% for message in messages %}<p class="flash-message">{{ message }}</p>{% endfor %}
+        {% endif %}
 
-    <h2>How Baithak Works</h2>
+        <div class="dashboard-top">
+            <section class="reservation-box">
+                <div class="card reservation-card">
+                    <div class="card-heading"><div><span class="eyebrow">YOUR STUDY SESSION</span><h2>My reservation</h2></div>{% if reservation %}<span class="status-pill status-{{ reservation.status }}">{{ reservation.get_status_display }}</span>{% endif %}</div>
+                    {% if reservation %}
+                        <div class="reservation-seat"><span class="seat-icon" aria-hidden="true">{{ reservation.seat.number }}</span><div><span class="eyebrow">YOUR SEAT</span><strong>{{ reservation.seat.get_floor_display }}</strong></div></div>
+                        <div class="reservation-details">
+                            {% if reservation.status == 'reserved' %}<p><span>Check-in in</span><strong><time id="checkin-countdown" data-deadline="{{ reservation.checkin_deadline|date:'c' }}">{{ reservation.checkin_deadline|date:'D, M j · H:i' }}</time></strong></p>{% else %}<p><span>Checked in</span><strong>{{ reservation.checked_in_at|date:'D, M j · H:i' }}</strong></p>{% endif %}
+                            <p><span>Study timer</span><strong>{% if reservation.ends_at %}<time id="reservation-countdown" data-end="{{ reservation.ends_at|date:'c' }}">{{ reservation.ends_at|date:'D, M j · H:i' }}</time>{% else %}Starts after check-in{% endif %}</strong></p>
+                            {% if reservation.checked_in_at %}<p><span>Checked in</span><strong>{{ reservation.checked_in_at|date:'D, M j · H:i' }}</strong></p>{% endif %}
+                        </div>
+                        {% if reservation.status == 'reserved' %}<a class="button-primary" href="{% url 'checkin' %}">View check-in QR <span aria-hidden="true">→</span></a>{% endif %}
+                        {% if reservation.checked_in_at %}<form method="post" class="renew-form">{% csrf_token %}<input type="hidden" name="action" value="renew"><label for="renew-duration">Add study time</label><div class="inline-form"><select id="renew-duration" name="duration">{% for minute in duration_options %}<option value="{{ minute }}" {% if minute == policy.default_minutes %}selected{% endif %}>{{ minute }} minutes</option>{% endfor %}</select><button type="submit" class="button-secondary">Renew</button></div></form>{% endif %}
+                        {% if reservation.status == 'active' %}<div class="session-actions"><a href="{% url 'break' %}">Break or check out <span aria-hidden="true">→</span></a><button type="button" id="location-start" class="text-button">Enable location alerts</button></div><p id="location-status" class="helper-text">Location sharing is off. Turn it on only while studying.</p>{% elif reservation.status == 'break' %}<a href="{% url 'break' %}">Return from your break →</a>{% endif %}
+                    {% else %}
+                        <div class="empty-state"><span class="empty-icon" aria-hidden="true">✦</span><h3>No seat reserved yet</h3><p>Choose a spot on any floor and make it your own for the next study session.</p><a class="button-primary" href="{% url 'seat' %}">Browse available seats <span aria-hidden="true">→</span></a></div>
+                    {% endif %}
+                </div>
+            </section>
 
-    <div class="steps">
-
-        <div class="step">
-            <span>1</span>
-            <h3>Book a Seat</h3>
-            <p>Select an available seat from any floor.</p>
-        </div>
-
-        <div class="step">
-            <span>2</span>
-            <h3>Check In</h3>
-            <p>Scan the seat QR code when you arrive.</p>
-        </div>
-
-        <div class="step">
-            <span>3</span>
-            <h3>Study</h3>
-            <p>Your seat remains occupied while you work.</p>
-        </div>
-
-        <div class="step">
-            <span>4</span>
-            <h3>Take Breaks</h3>
-            <p>Leave temporarily without losing your seat.</p>
+            <section class="stats-container" aria-label="Library occupancy">
+                <div class="card stat-card"><span class="stat-symbol" aria-hidden="true">○</span><h3>Available</h3><p>{{ available_count }}</p><small>seats ready to book</small></div>
+                <div class="card stat-card"><span class="stat-symbol" aria-hidden="true">◷</span><h3>Reserved</h3><p>{{ reserved_count }}</p><small>waiting for check-in</small></div>
+                <div class="card stat-card"><span class="stat-symbol" aria-hidden="true">◉</span><h3>In use</h3><p>{{ occupied_count }}</p><small>checked in or away</small></div>
+            </section>
         </div>
 
-        <div class="step">
-            <span>5</span>
-            <h3>Receive Alerts</h3>
-            <p>Get notified about reservations and warnings.</p>
+        <section class="quick-actions">
+            <div class="section-heading"><div><span class="eyebrow">KEEP YOUR FLOW</span><h2>Quick actions</h2></div></div>
+            <div class="quick-grid">
+                <a class="quick-card" href="{% url 'seat' %}"><span class="quick-icon">01</span><span><strong>Find a seat</strong><small>Choose a floor and study duration</small></span><b aria-hidden="true">↗</b></a>
+                <a class="quick-card" href="{% url 'checkin' %}"><span class="quick-icon">02</span><span><strong>Check in</strong><small>Open your reservation QR code</small></span><b aria-hidden="true">↗</b></a>
+                <a class="quick-card" href="{% url 'break' %}"><span class="quick-icon">03</span><span><strong>Take a break</strong><small>Step out and keep your seat briefly</small></span><b aria-hidden="true">↗</b></a>
+            </div>
+        </section>
+
+        <div class="dashboard-bottom">
+            <section class="panel-section"><div class="section-heading"><div><span class="eyebrow">STAY IN THE LOOP</span><h2>Recent notifications</h2></div><a href="{% url 'notification' %}">View all →</a></div>
+                <div class="card notification-card">{% for item in recent_notifications %}<article class="notification-row"><span class="notification-dot" aria-hidden="true"></span><div><p>{{ item.message }}</p><small>{{ item.created_at|date:'M j · H:i' }}</small></div></article>{% empty %}<p class="muted-empty">You’re all caught up. We’ll show your reservation updates here.</p>{% endfor %}</div>
+            </section>
+            <section class="panel-section"><div class="section-heading"><div><span class="eyebrow">450 PLACES TO FOCUS</span><h2>Explore the floors</h2></div></div>
+                <div class="floor-list card"><div><span>G</span><strong>Ground floor</strong><small>184 seats</small></div><div><span>1</span><strong>First floor</strong><small>86 seats</small></div><div><span>2</span><strong>Second floor</strong><small>60 seats</small></div><div><span>3</span><strong>Third floor</strong><small>54 seats</small></div><div><span>4</span><strong>Fourth floor</strong><small>66 seats</small></div></div>
+            </section>
         </div>
+    </main>
+    <footer><p>© 2026 Baithak <span>·</span> Nava Nalanda Central Library</p></footer>
 
-        <div class="step">
-            <span>6</span>
-            <h3>Vacate Seat</h3>
-            <p>Release your seat when you're finished.</p>
-        </div>
-
-    </div>
-
-</section>
-
-    <div class="top-section">
-    <section class="dashboard-header">
-    <h1>Welcome, {{ name }}</h1><br>
-    <p>Manage your reservations, track seat availability, and monitor your study sessions.</p><br>
-
-    <div class="timers-container">
-
-    <div class="card1">
-        <h2>Reservation Timer</h2>
-        <h3 id="countdown">01:00 min</h3>
-    </div><br>
-
-    <h3>{Library Main Entrance where you have to scan your id}</h3><br>
-    <a href="{% url 'checkin' %}" class="btn btn-primary"><button type="button" style="border-radius: 6px; width: 150px; height: 50px; background-color: cadetblue; color: antiquewhite; font-size: 18px; padding-left: 10px;">Library Entrance</button></a>
-    <a href="{% url 'break' %}" class="btn btn-primary"><button type="button" style="border-radius: 6px; width: 150px; height: 50px; background-color: yellowgreen; color: antiquewhite; font-size: 18px;">Leaving Library</button></a>
-
-</div>
-</section>
-
-<section class="reservation-box">
-    <div class="card">
-    <h2>My Reservation</h2><br><br>
-    <h3>Seat No. <span id="seat-number">-</span></h3><br><br>
-    <p><strong>Floor:</strong> <span id="seat-floor">-</span></p><br>
-    <p><strong>Status:</strong> <span id="seat-status">None</span></p><br>
-    <p><strong>Check-In Time: </strong><span id="checkin-time">--</span></p>
-</div>
-</section>
-</div>
-
-<section>
-
-<div class="section-title">
-    <h2>Quick Actions</h2>
-</div>
-
-<div class="features">
-
-    <a href="{% url 'seat' %}" class="card-link">
-    <div class="card">
-        <h3>📖 Book Seat</h3><br>
-        <p>Reserve a seat from the available library spaces.</p>
-    </div>
-    </a>
-
-    <div class="card">
-        <h3>📱 Manual Check In</h3>
-        <p>Check in to confirm your presence in the library.</p>
-    </div>
-
-    <div class="card">
-        <h3>☕ Temporary Break</h3><br>
-        <p>Hold your seat while stepping away for a short break.</p>
-    </div>
-
-    <div class="card">
-        <h3>✅ Permanent Check-Out</h3>
-        <p>Release your seat when you finish studying.</p>
-    </div>
-
-</div>
-</section>
-
-<section class="stats-container">
-<div class="card">
-    <h3>Available Seats</h3>
-    <p id="available-seats">450</p>
-</div>
-
-<div class="card">
-    <h3>Occupied Seats</h3>
-    <p id="occupied-seats">0</p>
-</div>
-
-<div class="card">
-    <h3>Reserved Seats</h3>
-    <p id="reserved-seats">0</p>
-</div>
-</section>
-
-<section style="background:white;">
-
-<div class="section-title">
-    <h2>Seats in Each Floor</h2>
-</div>
-
-<div class="steps">
-
-    <div class="step">
-        <h3>Ground Floor</h3>
-        <p id="ground-floor">184 Seats</p>
-    </div>
-
-    <div class="step">
-        <h3>First Floor</h3>
-        <p id="first-floor">86 Seats</p>
-    </div>
-
-    <div class="step">
-        <h3>Second Floor</h3>
-        <p id="second-floor">60 Seats</p>
-    </div>
-
-    <div class="step">
-        <h3>Third Floor</h3>
-        <p id="third-floor">54 Seats</p>
-    </div>
-
-    <div class="step">
-        <h3>Fourth Floor</h3>
-        <p id="id=fourth-floor">66 Seats</p>
-    </div>
-
-</div>
-</section>
-
-    <footer>
-        <p>© 2026 Baithak | Smart Library Seat Booking System</p>
-    </footer>
-
-<script src="{% static 'script.js' %}"></script>
+    <script>
+        function runCountdown(element, attribute, expiredText) {
+            if (!element) return;
+            const end = new Date(element.dataset[attribute]).getTime();
+            const update = () => {
+                const left = Math.max(0, Math.floor((end - Date.now()) / 1000));
+                element.textContent = left ? `${Math.floor(left / 60)}m ${String(left % 60).padStart(2, '0')}s` : expiredText;
+                if (!left) location.reload();
+            };
+            update(); setInterval(update, 1000);
+        }
+        runCountdown(document.getElementById('checkin-countdown'), 'deadline', 'Expired — releasing seat…');
+        const studyCountdown = document.getElementById('reservation-countdown');
+        if (studyCountdown) {
+            const end = new Date(studyCountdown.dataset.end).getTime();
+            const update = () => {
+                const left = Math.max(0, Math.floor((end - Date.now()) / 1000));
+                studyCountdown.textContent = left ? `${Math.floor(left / 3600)}h ${Math.floor(left % 3600 / 60)}m ${left % 60}s` : 'Expired — refreshing status…';
+                if (!left) location.reload();
+            };
+            update(); setInterval(update, 1000);
+        }
+        const locationButton = document.getElementById('location-start');
+        if (locationButton) locationButton.addEventListener('click', () => {
+            const status = document.getElementById('location-status');
+            if (!navigator.geolocation) { status.textContent = 'This browser does not support location.'; return; }
+            locationButton.disabled = true; status.textContent = 'Requesting location permission…';
+            navigator.geolocation.watchPosition(async pos => {
+                try {
+                    const response = await fetch('{% url 'location_report' %}', {method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')}, body: JSON.stringify({latitude: pos.coords.latitude, longitude: pos.coords.longitude})});
+                    const data = await response.json(); status.textContent = data.ok ? `Location status: ${data.status}. Updates are sent while this page is open.` : data.error;
+                } catch (error) { status.textContent = 'Could not report location. Check your connection.'; }
+            }, () => { status.textContent = 'Location permission was not granted; alerts are off.'; locationButton.disabled = false; }, {enableHighAccuracy: true, maximumAge: 30000, timeout: 10000});
+        });
+        function getCookie(name) { return document.cookie.split('; ').find(row => row.startsWith(name + '='))?.split('=')[1] || ''; }
+    </script>
 </body>
 </html>
